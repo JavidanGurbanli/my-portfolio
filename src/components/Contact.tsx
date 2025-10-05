@@ -40,9 +40,34 @@ const Contact = ({ refProp, darkMode = true }: ContactProps) => {
   });
 
   async function onSubmit(data: z.infer<typeof contactFormSchema>) {
-    setSubmitStatus("success");
-    setSubmitMessage(`Thanks ${data.name || "there"}! Message queued (demo).`);
-    reset();
+    try {
+      setSubmitStatus(null);
+      setSubmitMessage("");
+
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        setSubmitStatus("error");
+        setSubmitMessage(json?.message || "Failed to send message.");
+        return;
+      }
+
+      setSubmitStatus("success");
+      setSubmitMessage(json?.message || `Thanks ${data.name || "there"}! Message queued.`);
+      reset();
+    } catch (err) {
+      console.error("Contact form submit error:", err);
+      setSubmitStatus("error");
+      setSubmitMessage("An unexpected error occurred. Please try again later.");
+    }
   }
 
   useEffect(() => {
